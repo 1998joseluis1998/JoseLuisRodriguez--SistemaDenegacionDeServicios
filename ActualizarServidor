@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# codigo para clonar automaticamente el repositorio de github
+
+rm ProyectoSIN -r
+git clone https://github.com/friki57/ProyectoSIN.git
+cd ProyectoSIN
+npm i
+npm rebuild
+npm start
