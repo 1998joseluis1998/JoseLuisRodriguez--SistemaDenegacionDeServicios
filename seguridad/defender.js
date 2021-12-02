@@ -115,6 +115,36 @@ var baneados = [];
 
 const shell = require('shelljs')
 const fs = require("fs")
+
+function buscarguardarip(ip,recordFileName,myData){
+
+  console.log("Recuperando datos de IpStack")
+    fetch(ipstack + ip + '?access_key=' + apikey, {
+      method: 'get',
+      headers: { 'Content-Type': 'application/json' }
+    })
+      .then((res) => res.json())
+      .then((json) => {  
+        //muestra todos los datos de la ip
+        console.log(json);  
+        //conseguimos los datos necesarios para la ip
+        myData.push({
+          ip: json.ip,
+          continent_name: json.continent_name,
+          country_name: json.country_name,
+          region_name: json.region_name,
+          city: json.city,
+          latitude: json.latitude,
+          longitude: json.longitude
+        }) 
+        //agregamos a la lista
+        fs.writeFile(recordFileName, JSON.stringify(myData), () => {
+          console.log("File updated");
+        });    
+      });    
+
+}
+
 function banear(ip) {
   var incluye = false;
   baneados.map(a => {
@@ -136,7 +166,7 @@ function banear(ip) {
 
     //
   const recordFileName = "ipRecords.json";
-  var found = false;
+  
   var myData=[];
 
   if (fs.existsSync(recordFileName)) {
@@ -144,6 +174,7 @@ function banear(ip) {
       if (err) {
         console.log("Error:", err)
       }
+      var found = false;
       //console.log(data);
       myData = JSON.parse(data);      
       // Buscar IP en datos
@@ -154,40 +185,15 @@ function banear(ip) {
           break;
         }        
       }
+      if (!found) {
+        // Buscar ipstack
+        buscarguardarip(ip,recordFileName,myData);
+      }
     });    
   }
-  console.log(found)
-
-  if (!found) {
-    // Buscar ipstack
-    console.log("Recuperando datos de IpStack")
-    fetch(ipstack + ip + '?access_key=' + apikey, {
-      method: 'get',
-      headers: { 'Content-Type': 'application/json' }
-    })
-      .then((res) => res.json())
-      .then((json) => {
-  
-        //muestra todos los datos de la ip
-        console.log(json);
-  
-        //conseguimos los datos necesarios para la ip
-        myData.push({
-          ip: json.ip,
-          continent_name: json.continent_name,
-          country_name: json.country_name,
-          region_name: json.region_name,
-          city: json.city,
-          latitude: json.latitude,
-          longitude: json.longitude
-        }) 
-        //agregamos a la lista
-        fs.writeFile(recordFileName, JSON.stringify(myData), () => {
-          console.log("File updated");
-        });    
-      });    
+  else{
+    buscarguardarip(ip,recordFileName,myData);
   }
-  
 
   var incl = false;
   reincidentes.map(a => {
