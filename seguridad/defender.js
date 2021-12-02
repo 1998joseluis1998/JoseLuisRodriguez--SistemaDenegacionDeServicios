@@ -116,32 +116,35 @@ var baneados = [];
 const shell = require('shelljs')
 const fs = require("fs")
 
-function buscarguardarip(ip,recordFileName,myData){
-
+function buscarguardarip(ip, recordFileName, myData) {
+  
+  //obtener datos de ipstack
+  const ipstack = 'http://api.ipstack.com/';
+  const apikey = 'c9342fe3917893cfe36255f7ed21aaf4';
   console.log("Recuperando datos de IpStack")
-    fetch(ipstack + ip + '?access_key=' + apikey, {
-      method: 'get',
-      headers: { 'Content-Type': 'application/json' }
-    })
-      .then((res) => res.json())
-      .then((json) => {  
-        //muestra todos los datos de la ip
-        console.log(json);  
-        //conseguimos los datos necesarios para la ip
-        myData.push({
-          ip: json.ip,
-          continent_name: json.continent_name,
-          country_name: json.country_name,
-          region_name: json.region_name,
-          city: json.city,
-          latitude: json.latitude,
-          longitude: json.longitude
-        }) 
-        //agregamos a la lista
-        fs.writeFile(recordFileName, JSON.stringify(myData), () => {
-          console.log("File updated");
-        });    
-      });    
+  fetch(ipstack + ip + '?access_key=' + apikey, {
+    method: 'get',
+    headers: { 'Content-Type': 'application/json' }
+  })
+    .then((res) => res.json())
+    .then((json) => {
+      //muestra todos los datos de la ip
+      console.log(json);
+      //conseguimos los datos necesarios para la ip
+      myData.push({
+        ip: json.ip,
+        continent_name: json.continent_name,
+        country_name: json.country_name,
+        region_name: json.region_name,
+        city: json.city,
+        latitude: json.latitude,
+        longitude: json.longitude
+      })
+      //agregamos a la lista
+      fs.writeFile(recordFileName, JSON.stringify(myData), () => {
+        console.log("File updated");
+      });
+    });
 
 }
 
@@ -160,14 +163,10 @@ function banear(ip) {
   shell.exec('ufw insert 1 deny from ' + ip + ' to any port 80')
   shell.exec('ufw insert 1 deny from ' + ip + ' to any port 4000')
 
-  //obtener datos de ipstack
-  const ipstack = 'http://api.ipstack.com/';
-  const apikey = 'c9342fe3917893cfe36255f7ed21aaf4';
 
-    //
   const recordFileName = "ipRecords.json";
-  
-  var myData=[];
+
+  var myData = [];
 
   if (fs.existsSync(recordFileName)) {
     fs.readFile(recordFileName, "utf-8", (err, data) => {
@@ -176,23 +175,23 @@ function banear(ip) {
       }
       var found = false;
       //console.log(data);
-      myData = JSON.parse(data);      
+      myData = JSON.parse(data);
       // Buscar IP en datos
       for (let i = 0; i < myData.length; i++) {
         if (myData[i].ip == ip) {
           found = true;
           console.log("IP ya conocida:", myData[i]);
           break;
-        }        
+        }
       }
       if (!found) {
         // Buscar ipstack
-        buscarguardarip(ip,recordFileName,myData);
+        buscarguardarip(ip, recordFileName, myData);
       }
-    });    
+    });
   }
-  else{
-    buscarguardarip(ip,recordFileName,myData);
+  else {
+    buscarguardarip(ip, recordFileName, myData);
   }
 
   var incl = false;
