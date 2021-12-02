@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/friki57/ProyectoSIN#readme",
   "dependencies": {
+    "node-fetch": "^3.1.0",
     "@tensorflow/tfjs": "^2.7.0",
     "cap": "^0.2.1",
     "cookie-parser": "^1.4.5",
