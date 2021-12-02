@@ -22,15 +22,14 @@ c.setMinBytes && c.setMinBytes(0);
 var IPs = [];
 
 
-c.on('packet', function(nbytes, trunc) {
+c.on('packet', function (nbytes, trunc) {
   //console.log("--------------------------------------------------------------------------------------------------------")
   //console.log("Llegó algo", fechas(new Date())) 
- // console.log('packet: tamaño ' + nbytes + ' bytes, truncado? ' + (trunc ? 'sí' : 'no'));
+  // console.log('packet: tamaño ' + nbytes + ' bytes, truncado? ' + (trunc ? 'sí' : 'no'));
 
   // raw packet data === buffer.slice(0, nbytes)
 
-  if (linkType === 'ETHERNET') 
-  {
+  if (linkType === 'ETHERNET') {
     var ret = decoders.Ethernet(buffer);
 
     if (ret.info.type === PROTOCOL.ETHERNET.IPV4) {
@@ -55,11 +54,10 @@ c.on('packet', function(nbytes, trunc) {
 
         ret = decoders.UDP(buffer, ret.offset);
         //console.log(' del puerto: ' + ret.info.srcport + ' a el puerto: ' + ret.info.dstport);
-       // console.log(buffer.toString('binary', ret.offset, ret.offset + ret.info.length));
-      } else
-        {
-          //console.log('No soporta IPV4: ' + PROTOCOL.IP[ret.info.protocol]);
-        }
+        // console.log(buffer.toString('binary', ret.offset, ret.offset + ret.info.length));
+      } else {
+        //console.log('No soporta IPV4: ' + PROTOCOL.IP[ret.info.protocol]);
+      }
     } else {
       //console.log('Unsupported Ethertype: ' + PROTOCOL.ETHERNET[ret.info.type]);
     }
@@ -67,114 +65,134 @@ c.on('packet', function(nbytes, trunc) {
 });
 
 
-function actualizarIPs (ip) {
-  if(ip!=TUIP)
-  {
+function actualizarIPs(ip) {
+  if (ip != TUIP) {
     var incluye = false;
-    IPs.map(a=>
-    {
-      if(a.ip == ip)
-      {
+    IPs.map(a => {
+      if (a.ip == ip) {
         incluye = true;
       }
     });
-    if(incluye==false)
-    {
-      IPs.push({ip:ip,cant:1});
+    if (incluye == false) {
+      IPs.push({ ip: ip, cant: 1 });
     }
-    else
-    {
-      const ind = IPs.findIndex(a=>ip==a.ip);
+    else {
+      const ind = IPs.findIndex(a => ip == a.ip);
       IPs[ind].cant = IPs[ind].cant + 1;
     }
-  }  
+  }
 }
 var tiempo = 5000;
 
 function timeout() {
-    setTimeout(function () {
-        //console.log(IPs);
-        if(IA.entrenando == true)
-        {
-          IA.entrenar(IPs.map(a=>a.cant),tiempo);
+  setTimeout(function () {
+    //console.log(IPs);
+    if (IA.entrenando == true) {
+      IA.entrenar(IPs.map(a => a.cant), tiempo);
+    }
+    else {
+      const IACant = IA.predecir(tiempo / 1000)[0];
+      IPs.map((a) => {
+        console.log(a.cant, IACant);
+        if (a.cant > IACant * 20) {
+          banear(a.ip);
         }
-        else
-        {
-          const IACant = IA.predecir(tiempo/1000)[0];
-          IPs.map((a)=>
-          {
-            console.log(a.cant, IACant);
-            if(a.cant > IACant * 20)
-            {
-              banear(a.ip);
-            }
-          })
-        }
-        
-        IPs = []
-        tiempo = (Math.floor(Math.random() * 7000) + 3000)
-        console.log("tiempo",tiempo)
-        timeout();
-    }, tiempo);
+      })
+    }
+
+    IPs = []
+    tiempo = (Math.floor(Math.random() * 7000) + 3000)
+    console.log("tiempo", tiempo)
+    timeout();
+  }, tiempo);
 };
 timeout();
 
 var baneados = [];
- 
+
 const shell = require('shelljs')
 const fs = require("fs")
-function banear (ip) {
-    var incluye = false;
-    baneados.map(a=>
-    {
-      if(a == ip)
-      {
-        incluye = true;
-      }
-    });
-    if(incluye==true)
-    {
-      return ;
+function banear(ip) {
+  var incluye = false;
+  baneados.map(a => {
+    if (a == ip) {
+      incluye = true;
     }
+  });
+  if (incluye == true) {
+    return;
+  }
   baneados.push(ip);
-  
-  shell.exec('ufw insert 1 deny from '+ip+' to any port 80')
-  shell.exec('ufw insert 1 deny from '+ip+' to any port 4000')
 
-    var incl = false;
-    reincidentes.map(a=>
-    {
-      if(a.ip == ip)
-      {
-        incl = true;
-      }
+  shell.exec('ufw insert 1 deny from ' + ip + ' to any port 80')
+  shell.exec('ufw insert 1 deny from ' + ip + ' to any port 4000')
+
+  //obtener datos de ipstack
+  const ipstack = 'http://api.ipstack.com/';
+  const apikey='c9342fe3917893cfe36255f7ed21aaf4';
+
+  fetch(ipstack + ip +'?access_key=' + apikey, {
+    method: 'get',
+    headers: { 'Content-Type': 'application/json' }
+  })
+    .then((res) => res.json())
+    .then((json) => {
+      
+      //muestra todos los datos de la ip
+      console.log(json);
+
+      //conseguimos los datos necesarios para la ip
+      var datosjson = {
+        ip: json.ip,
+        continent_name: json.continent_name,
+        country_name: json.country_name,
+        region_name: json.region_name,
+        city: json.city,
+        latitude: json.latitude,
+        longitude: json.longitude
+    }    
+    //Convertimos los datos del Json en String
+
+    var myString = JSON.stringify(datosjson)
+
+      fs.appendFile("datosIP.txt", fechas(new Date()) + "\n" + myString + "\n", function (err) {
+        if (err) throw err;
+        console.log('Datos de IP almacenados correctamente');
+      });
     });
-    var cantidadIncidencias = 1;
-    if(incl==false)
-    {
-      reincidentes.push({ip:ip,cant:1});
+
+  var incl = false;
+  reincidentes.map(a => {
+    if (a.ip == ip) {
+      incl = true;
     }
-    else
-    {
-      const ind = reincidentes.findIndex(a=>ip==a.ip);
-      reincidentes[ind].cant = reincidentes[ind].cant + 1;
-      cantidadIncidencias = reincidentes[ind].cant;
-    }
-    var mensaje = "Baneando a "+" "+ ip+" "+ "por "+" "+ (30)*cantidadIncidencias+" "+ "segundos";
-  console.log(mensaje) 
-  fs.appendFile("Registro.txt", fechas(new Date()) + "\n" + mensaje+ "\n", function (err) {
+  });
+  var cantidadIncidencias = 1;
+  if (incl == false) {
+    reincidentes.push({ ip: ip, cant: 1 });
+  }
+  else {
+    const ind = reincidentes.findIndex(a => ip == a.ip);
+    reincidentes[ind].cant = reincidentes[ind].cant + 1;
+    cantidadIncidencias = reincidentes[ind].cant;
+  }
+  var mensaje = "Baneando a " + " " + ip + " " + "por " + " " + (30) * cantidadIncidencias + " " + "segundos";
+  console.log(mensaje)
+  fs.appendFile("Registro.txt", fechas(new Date()) + "\n" + mensaje + "\n", function (err) {
     if (err) throw err;
     console.log('Registro actualizado');
   });
-  setTimeout(()=>{desbanear(ip)},(30 * 1000)*cantidadIncidencias);
+  setTimeout(() => { desbanear(ip) }, (30 * 1000) * cantidadIncidencias);
 }
+
 var reincidentes = [];
 
-function desbanear (ip) {
-  baneados = baneados.filter(a=>a!=ip);
+function desbanear(ip) {
+  baneados = baneados.filter(a => a != ip);
   console.log("Desbaneando a ", ip);
-  shell.exec('ufw delete deny from '+ip+' to any port 80')
-  shell.exec('ufw delete deny from '+ip+' to any port 4000')
+  shell.exec('ufw delete deny from ' + ip + ' to any port 80')
+  shell.exec('ufw delete deny from ' + ip + ' to any port 4000')
+  console.log()
 }
 
 var IA = require("./../Utiles/IA.js")
@@ -183,7 +201,6 @@ IA.cargarModelo();
 
 // var x = [1.82, 1.70, 1.87, 1.54, 1.63]
 // var y = [80, 75, 85, 65, 72]
-setTimeout(()=>
-{
+setTimeout(() => {
   console.log(IA.predecir(5)[0]);
-},3000)
+}, 3000)
