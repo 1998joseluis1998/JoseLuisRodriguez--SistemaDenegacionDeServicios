@@ -132,37 +132,63 @@ function banear(ip) {
 
   //obtener datos de ipstack
   const ipstack = 'http://api.ipstack.com/';
-  const apikey='c9342fe3917893cfe36255f7ed21aaf4';
+  const apikey = 'c9342fe3917893cfe36255f7ed21aaf4';
 
-  fetch(ipstack + ip +'?access_key=' + apikey, {
-    method: 'get',
-    headers: { 'Content-Type': 'application/json' }
-  })
-    .then((res) => res.json())
-    .then((json) => {
+    //
+  const recordFileName = "ipRecords.json";
+  var found = false;
+  var myData=[];
+
+  if (fs.existsSync(recordFileName)) {
+    fs.readFile(recordFileName, "utf-8", (err, data) => {
+      if (err) {
+        console.log("Error:", err)
+      }
+      //console.log(data);
+      myData = JSON.parse(data);
       
-      //muestra todos los datos de la ip
-      console.log(json);
-
-      //conseguimos los datos necesarios para la ip
-      var datosjson = {
-        ip: json.ip,
-        continent_name: json.continent_name,
-        country_name: json.country_name,
-        region_name: json.region_name,
-        city: json.city,
-        latitude: json.latitude,
-        longitude: json.longitude
-    }    
-    //Convertimos los datos del Json en String
-
-    var myString = JSON.stringify(datosjson)
-
-      fs.appendFile("datosIP.txt", fechas(new Date()) + "\n" + myString + "\n", function (err) {
-        if (err) throw err;
-        console.log('Datos de IP almacenados correctamente');
-      });
+      // Buscar IP en datos
+      for (let i = 0; i < myData.length; i++) {
+        if (myData[i].ip == ip) {
+          found = true;
+          console.log("IP ya conocida:", myData[i]);
+          break;
+        }
+      }
     });
+  }
+  
+  if (!found) {
+    // Buscar ipstack
+    fetch(ipstack + ip + '?access_key=' + apikey, {
+      method: 'get',
+      headers: { 'Content-Type': 'application/json' }
+    })
+      .then((res) => res.json())
+      .then((json) => {
+  
+        //muestra todos los datos de la ip
+        console.log(json);
+  
+        //conseguimos los datos necesarios para la ip
+        myData.push({
+          ip: json.ip,
+          continent_name: json.continent_name,
+          country_name: json.country_name,
+          region_name: json.region_name,
+          city: json.city,
+          latitude: json.latitude,
+          longitude: json.longitude
+        }) 
+        //agregamos a la lista
+        fs.writeFile(recordFileName, JSON.stringify(myData), () => {
+          console.log("File updated");
+        });
+
+    
+      });    
+  }
+  
 
   var incl = false;
   reincidentes.map(a => {
