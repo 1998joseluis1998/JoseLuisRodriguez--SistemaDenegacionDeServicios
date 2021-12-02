@@ -145,21 +145,22 @@ function banear(ip) {
         console.log("Error:", err)
       }
       //console.log(data);
-      myData = JSON.parse(data);
-      
+      myData = JSON.parse(data);      
       // Buscar IP en datos
       for (let i = 0; i < myData.length; i++) {
         if (myData[i].ip == ip) {
           found = true;
           console.log("IP ya conocida:", myData[i]);
           break;
-        }
+        }        
       }
-    });
+    });    
   }
-  
+  console.log(found)
+
   if (!found) {
     // Buscar ipstack
+    console.log("Recuperando datos de IpStack")
     fetch(ipstack + ip + '?access_key=' + apikey, {
       method: 'get',
       headers: { 'Content-Type': 'application/json' }
@@ -183,9 +184,7 @@ function banear(ip) {
         //agregamos a la lista
         fs.writeFile(recordFileName, JSON.stringify(myData), () => {
           console.log("File updated");
-        });
-
-    
+        });    
       });    
   }
   
