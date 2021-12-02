@@ -1,3 +1,6 @@
+var fetch = require("node-fetch");
+//import fetch from "node-fetch";
+
 var fechas = require("./../Utiles/fechas.js")
 var Cap = require('cap').Cap;
 var lista = Cap.deviceList();
