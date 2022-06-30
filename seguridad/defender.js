@@ -105,7 +105,11 @@ function timeout() {
 
     IPs = []
     tiempo = (Math.floor(Math.random() * 7000) + 3000)
-    console.log("tiempo", tiempo)
+    if(tiempo!=5000)
+    {
+      console.log("tiempo terminado")
+    }    
+      console.log("Monitoerando la red en este tiempo:",tiempo)       
     timeout();
   }, tiempo);
 };
