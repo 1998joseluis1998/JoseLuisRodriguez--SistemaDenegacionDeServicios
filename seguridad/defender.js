@@ -175,7 +175,7 @@ function banear(ip) {
       }
       var found = false;
       //console.log(data);
-      myData = JSON.parse(data);
+      myData = JSON.parse(data.replace(/ 0+(?![\. }])/g, ' '));
       // Buscar IP en datos
       for (let i = 0; i < myData.length; i++) {
         if (myData[i].ip == ip) {
