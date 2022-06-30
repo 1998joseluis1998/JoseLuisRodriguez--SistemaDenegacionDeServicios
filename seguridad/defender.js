@@ -96,7 +96,7 @@ function timeout() {
     else {
       const IACant = IA.predecir(tiempo / 1000)[0];
       IPs.map((a) => {
-        console.log(a.cant, IACant);
+        //console.log(a.cant, IACant);
         if (a.cant > IACant * 20) {
           banear(a.ip);
         }
@@ -209,7 +209,7 @@ function banear(ip) {
     reincidentes[ind].cant = reincidentes[ind].cant + 1;
     cantidadIncidencias = reincidentes[ind].cant;
   }
-  var mensaje = "Baneando a " + " " + ip + " " + "por " + " " + (30) * cantidadIncidencias + " " + "segundos";
+  var mensaje = "Bloqueando acceso a " + " " + ip + " " + "por " + " " + (30) * cantidadIncidencias + " " + "segundos";
   console.log(mensaje)
   fs.appendFile("Registro.txt", fechas(new Date()) + "\n" + mensaje + "\n", function (err) {
     if (err) throw err;
@@ -222,7 +222,7 @@ var reincidentes = [];
 
 function desbanear(ip) {
   baneados = baneados.filter(a => a != ip);
-  console.log("Desbaneando a ", ip);
+  console.log("Desbloqueando acceso a ", ip);
   shell.exec('ufw delete deny from ' + ip + ' to any port 80')
   shell.exec('ufw delete deny from ' + ip + ' to any port 4000')
   console.log()
@@ -235,5 +235,5 @@ IA.cargarModelo();
 // var x = [1.82, 1.70, 1.87, 1.54, 1.63]
 // var y = [80, 75, 85, 65, 72]
 setTimeout(() => {
-  console.log(IA.predecir(5)[0]);
+  //console.log(IA.predecir(5)[0]);
 }, 3000)
